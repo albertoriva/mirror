@@ -14,9 +14,9 @@ def plural(l):
 
 class Mirror():
     conffile = CONFFILE
-    srcpath = ""
+    srcpath = None
     dstpath = "."
-    filelist = "FILELIST"
+    filelist = ".FILELIST"
     created = []
     modified = []
     filenames = []
@@ -53,6 +53,7 @@ Options:
         if "-h" in args or "--help" in args:
             self.usage()
             return False
+        self.maybeLoadConf(args)
         prev = ""
         for a in args:
             if prev == "-s":
@@ -64,10 +65,7 @@ Options:
             elif prev == "-f":
                 self.filelist = a
                 prev = ""
-            elif prev == "-c":
-                self.conffile = a
-                prev = ""
-            elif a in ["-s", "-d", "-f", "-c"]:
+            elif a in ["-s", "-d", "-f"]:
                 prev = a
             elif a == "-i":
                 self.mode = "list"
@@ -76,7 +74,27 @@ Options:
             else:
                 self.filenames.append(a)
         return True
-    
+
+    def maybeLoadConf(self, args):
+        prev = ""
+        for a in args:
+            if prev == "-c":
+                self.conffile = a
+                prev = ""
+            elif a == "-c":
+                prev = a
+        if os.path.isfile(self.conffile):
+            self.msg("Reading configuration defaults from {}\n", self.conffile)
+            with open(self.conffile, "r") as f:
+                for line in f:
+                    fields = [ s.strip() for s in line.split("=") ]
+                    if len(fields) == 2:
+                        key = fields[0]
+                        if key == "url":
+                            self.srcpath = fields[1]
+                        elif key == "filelist":
+                            self.filelist = fields[1]
+
     def writeFilelist(self):
         nin = len(self.filenames)
         nout = 0
@@ -97,7 +115,11 @@ Options:
         self.msg("{}/{} files added to file list.\n", nout, nin)
         
     def getFilelist(self):
-        os.remove(self.filelist)
+        if os.path.isfile:
+            try:
+                os.remove(self.filelist)
+            except:
+                pass
         url = self.srcpath + "/" + self.filelist
         self.msg("Retrieving file list from `{}'.\n", url)
         try:
