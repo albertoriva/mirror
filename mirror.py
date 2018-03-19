@@ -36,12 +36,12 @@ Usage: mirror.py [options]
 
 Options:
 
-  -s S | Set source URL to S (e.g. http://my.server.com/repo/). Required.
+  -s S | Set source URL to S (e.g. http://my.server.com/repo/). Required unless -i is in effect.
   -f F | Set name of file list file (default: {}).
   -c C | Set name of configuration file (default: {} in source directory).
   -x   | Dry run: print operations to be performed, don't actually do them.
   -i   | Initialize mode: write files listed on command-line to file list
-         (run this in the repo directory).
+         (run this in the repo directory on the server).
 
 (c) 2018, A. Riva
 """.format(self.filelist, self.conffile))
@@ -73,6 +73,9 @@ Options:
                 self.dry = True
             else:
                 self.filenames.append(a)
+        if self.mode == "get" and not self.srcpath:
+            self.usage()
+            return False
         return True
 
     def maybeLoadConf(self, args):

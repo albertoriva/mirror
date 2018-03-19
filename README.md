@@ -39,6 +39,8 @@ Options:
   -x   | Dry run: print operations to be performed, without actually performing them.
 ```
 
+If the options -h or --help are present on the command-line, the program will print a usage message and exit.
+
 ## Configuration file
 
 The configuration file is a simple text file containing lines of the form "key = value". The following two keys are currently defined:
