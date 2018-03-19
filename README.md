@@ -61,7 +61,7 @@ Detailed steps to set up a repository on a web server:
 * Optionally: create a configuration file specifying an alternative name for the file list.
 * Invoke mirror.py with the -i option followed by the list of files in the repository.
 
-For example, let's assume we are setting up a repository on host <strong>myhost.org</strong> under the <strong>repos/myapp</strong> folder. The repository include a number of files in the top-level directory, and two subdirectories: src/, containing files with extension .c, and doc/ containing files with the .txt extension. To initialize this repository we should go to the repository directory and execute:
+For example, let's assume we are setting up a repository on host <strong>myhost.org</strong> under the <strong>repos/myapp</strong> folder. The repository includes a number of files in the top-level directory, and two subdirectories: src/, containing files with extension .c, and doc/ containing files with extension .txt. To initialize this repository we should go to the repository directory and execute:
 
 ```
 mirror.py -i * src/*.c doc/*.txt
@@ -71,5 +71,32 @@ mirror.py -i * src/*.c doc/*.txt
  ```
  mirror.py -i @repofiles
  ```
+ 
+ ### Client side
+ On the client, create a directory for the repository. Normally you would use the same name as on the server, in this case <strong>myapp</strong>. Then cd to this directory and execute:
+ 
+ ```
+ mirror.py -s http://myhost.org/repos/myapp/
+ ```
+ 
+ Alternatively, you can save the url to the configuration file as follows:
+ 
+ ```
+ url = http://myhost.org/repos/myapp/
+ ```
+ 
+ In this case, client-side invocation simply becomes:
+ 
+ ```
+ mirror.py
+ ```
+ 
+ The program will perform the following operations:
+ 
+ * Download the file list from the server and save it locally (removing previous version if any);
+ * Compare all entries in the file list with local files or directories;
+ * If a directory in the file list does not exist locally, it is created;
+ * If a file in the file list does not exist locally, or if the remote version is newer than the local version, the file is downloaded;
+ * A message is printed to standard output showing whether the download was successful.
  
  
