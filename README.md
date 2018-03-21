@@ -1,6 +1,6 @@
 # Mirror
 
-<strong>mirror.py</strong> is a simple tool to keep files up-to-date by comparing them with a master copy on a remote server. It's a tiny, bare-bones, simple version of tools like cvs and subversion. Features:
+<strong>mirror.py</strong> is a simple tool to keep files up-to-date by comparing them with a master copy on a remote server. It is a tiny, bare-bones, simple version of tools like cvs and subversion. Features:
 
 * Extremely easy to set up and use;
 * Cross-platform;
@@ -101,4 +101,10 @@ mirror.py -i * src/*.c doc/*.txt
  * If a file in the file list does not exist locally, or if the remote version is newer than the local version, the file is downloaded;
  * A message is printed to standard output showing whether the download was successful.
  
+ ## Bugs, limitations, wishlist
+ 
+ * Python2 only for now.
+ * If a download fails, there's basically no way to know why.
+ * Support for Basic authentication is coming soon (command-line options are already present, but currently unused). In the meantime, an easy way of providing (very limited) security is to use a non-standard name for the file list. That way, only someone who knows the name you used will be able to mirror the files in the repository.
+ * No way to commit changes to the server, and no support for file versions. Use svn or git if you need that!
  
