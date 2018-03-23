@@ -114,7 +114,7 @@ If a command-line argument starts with '@', the remainder of the argument is int
 If the repository directory on the server is protected through Basic authentication, the client will need to provide username and password when submitting its requests. This can be done in two different ways:
 
 * Specify username and password on the command-line, using the -u and -p options;
-* Write username and password in the configuration file, using the /username/ and /password/ directives.
+* Write username and password in the configuration file, using the _username_ and _password_ directives.
 
  ## Bugs, limitations, wishlist
  
