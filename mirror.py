@@ -12,14 +12,24 @@ FILELISTHDR = "# FILELIST"
 def plural(l):
     return "" if len(l) == 1 else "s"
 
+class MirrorOpener(urllib.FancyURLopener):
+    username = None
+    password = None
+
+    def prompt_user_passwd(self, host, realm):
+        return (self.username, self.password)
+
 class Mirror():
     conffile = CONFFILE
     srcpath = None
     dstpath = "."
     filelist = ".FILELIST"
+    username = None
+    password = None
     created = []
     modified = []
     filenames = []
+    output = sys.stdout
     debug = sys.stderr
     mode = "get"
     dry = False
@@ -39,6 +49,8 @@ Options:
   -s S | Set source URL to S (e.g. http://my.server.com/repo/). Required.
   -f F | Set name of file list file (default: {}).
   -c C | Set name of configuration file (default: {} in source directory).
+  -u U | Set username for Basic authentication.
+  -p P | Set password for Basic authentication.
   -x   | Dry run: print operations to be performed, don't actually do them.
   -i   | Initialize mode: write files listed on command-line to file list
          (run this in the repo directory).
@@ -47,7 +59,10 @@ Options:
 """.format(self.filelist, self.conffile))
 
     def msg(self, string, *args):
-        sys.stderr.write("# " + string.format(*args))
+        self.debug.write("# " + string.format(*args))
+
+    def out(self, string, *args):
+        self.output.write(string.format(*args))
         
     def parseArgs(self, args):
         if "-h" in args or "--help" in args:
@@ -65,7 +80,13 @@ Options:
             elif prev == "-f":
                 self.filelist = a
                 prev = ""
-            elif a in ["-s", "-d", "-f"]:
+            elif prev == "-u":
+                self.username = a
+                prev = ""
+            elif prev == "-p":
+                self.password = a
+                prev = ""
+            elif a in ["-s", "-d", "-f", "-u", "-p"]:
                 prev = a
             elif a == "-i":
                 self.mode = "list"
@@ -73,8 +94,19 @@ Options:
                 self.dry = True
             else:
                 self.filenames.append(a)
+
+        # If we're connecting to a server that requires authentication, use
+        # the authenticating opener.
+        self.maybeDoAuthentication()
         return True
 
+    def maybeDoAuthentication(self):
+        if self.username and self.password:
+            opener = MirrorOpener()
+            opener.username = self.username
+            opener.password = self.password
+            urllib._urlopener = opener
+    
     def maybeLoadConf(self, args):
         prev = ""
         for a in args:
@@ -94,6 +126,10 @@ Options:
                             self.srcpath = fields[1]
                         elif key == "filelist":
                             self.filelist = fields[1]
+                        elif key == "username":
+                            self.username = fields[1]
+                        elif key == "password":
+                            self.password = fields[1]
 
     def writeFilelist(self):
         nin = len(self.filenames)
@@ -101,19 +137,30 @@ Options:
         with open(self.filelist, "w") as out:
             out.write(FILELISTHDR + "\n")
             for fn in self.filenames:
-                if os.path.isfile(fn) or os.path.isdir(fn):
-                    fs = os.stat(fn)
-                    mode = fs.st_mode
-                    if stat.S_ISREG(mode):
-                        ftype = "F"
-                    elif stat.S_ISDIR(mode):
-                        ftype = "D"
-                    else:
-                        continue
-                    out.write("{}\t{}\t{}\t{}\t{}\n".format(fn, ftype, mode, fs.st_size, fs.st_mtime))
-                    nout += 1
+                if fn and fn[0] == '@':
+                    with open(fn[1:], "r") as f:
+                        for line in f:
+                            if line and line[0] != '#':
+                                nout += self.writeOneFile(out, line.strip())
+                else:
+                    nout += self.writeOneFile(out, fn)
         self.msg("{}/{} files added to file list.\n", nout, nin)
-        
+
+    def writeOneFile(self, out, fn):
+        if os.path.isfile(fn) or os.path.isdir(fn):
+            fs = os.stat(fn)
+            mode = fs.st_mode
+            if stat.S_ISREG(mode):
+                ftype = "F"
+            elif stat.S_ISDIR(mode):
+                ftype = "D"
+            else:
+                return 0
+            out.write("{}\t{}\t{}\t{}\t{}\n".format(fn, ftype, mode, fs.st_size, fs.st_mtime))
+            return 1
+        else:
+            return 0
+
     def getFilelist(self):
         if os.path.isfile:
             try:
@@ -179,17 +226,17 @@ Options:
         ftype = cr[1]
         mode = int(cr[2])
         size = int(cr[3])
-        sys.stdout.write(code + ftype + "\t" + path + "\t")
+        self.out(code + ftype + "\t" + path + "\t")
         if self.dry:
-            sys.stdout.write("???\n")
+            self.out("???\n")
             return
         if ftype == "D":
             #try:
             os.makedirs(path)
             os.chmod(path, mode)
-            sys.stdout.write("ok.\n")
+            self.out("ok.\n")
             #except:
-            sys.stdout.write("failed.\n")
+            self.out("failed.\n")
         elif ftype == "F":
             try:
                 os.remove(path + ".bak")
@@ -199,9 +246,9 @@ Options:
             urllib.urlretrieve(self.srcpath + "/" + path, path)
             if os.path.isfile(path) and os.stat(path).st_size == size:
                 os.chmod(path, mode)
-                sys.stdout.write("ok.\n")
+                self.out("ok.\n")
             else:
-                sys.stdout.write("failed.\n")
+                self.out("failed.\n")
                 try:
                     os.rename(path + ".bak", path)
                 except:
