@@ -33,9 +33,11 @@ Client-side invocation:
 mirror.py [options]
 
 Options:
-  -f F | Use F as the name for the file list file (default: .FILELIST)
-  -c C | Use C as the name for the configuration file (default: .mirror)
-  -s S | Set source URL to S (required, unless specified in configuration file)
+  -f F | Use F as the name for the file list file (default: .FILELIST).
+  -c C | Use C as the name for the configuration file (default: .mirror).
+  -s S | Set source URL to S (required, unless specified in configuration file).
+  -u U | Set username for Basic authentication to U.
+  -p P | Set password for Basic authentication to P.
   -x   | Dry run: print operations to be performed, without actually performing them.
 ```
 
@@ -46,8 +48,11 @@ If the options -h or --help are present on the command-line, the program will pr
 The configuration file is a simple text file containing lines of the form "key = value". The following two keys are currently defined:
 
 ```
-filelist - specifies the name of the filelist file. This needs to be the same on the server and on the client.
-url - specifies the URL of the repository.
+filelist - specifies the name of the filelist file. This needs to be the same on the server and on the client. [Equivalent to -f option]
+url - specifies the URL of the repository. [Equivalent to -s option]
+username - specifies username for authentication. [Equivalent to -u option]
+password - specifies password for authentication. [Equivalent to -p option]
+
 ```
 
 ## Usage
@@ -68,7 +73,10 @@ For example, let's assume we are setting up a repository on host <strong>myhost.
 ```
 mirror.py -i * src/*.c doc/*.txt
 ```
- If a command-line argument starts with '@', the remainder of the argument is interpreted as the name of a file containing filenames to be added to the file list. So another way of accomplishing the result above would be to store all desired filenames into a file called e.g. repofiles, and then execute:
+
+Note that directories need to be explicitly included in the file list. In the previous example, the * takes care of that.
+
+If a command-line argument starts with '@', the remainder of the argument is interpreted as the name of a file containing filenames to be added to the file list. So another way of accomplishing the result above would be to store all desired filenames into a file called e.g. repofiles, and then execute:
  
  ```
  mirror.py -i @repofiles
@@ -100,11 +108,18 @@ mirror.py -i * src/*.c doc/*.txt
  * If a directory in the file list does not exist locally, it is created;
  * If a file in the file list does not exist locally, or if the remote version is newer than the local version, the file is downloaded;
  * A message is printed to standard output showing whether the download was successful.
- 
+
+## Security
+
+If the repository directory on the server is protected through Basic authentication, the client will need to provide username and password when submitting its requests. This can be done in two different ways:
+
+* Specify username and password on the command-line, using the -u and -p options;
+* Write username and password in the configuration file, using the /username/ and /password/ directives.
+
  ## Bugs, limitations, wishlist
  
  * Python2 only for now.
  * If a download fails, there's basically no way to know why.
- * Support for Basic authentication is coming soon (command-line options are already present, but currently unused). In the meantime, an easy way of providing (very limited) security is to use a non-standard name for the file list. That way, only someone who knows the name you used will be able to mirror the files in the repository.
+ * Security is based on Basic authentication, which is not terribly strong. Another easy way of providing (very limited) security is to use a non-standard name for the file list. That way, only someone who knows the name you used will be able to mirror the files in the repository.
  * No way to commit changes to the server, and no support for file versions. Use svn or git if you need that!
  
