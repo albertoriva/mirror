@@ -116,7 +116,35 @@ If the repository directory on the server is protected through Basic authenticat
 * Specify username and password on the command-line, using the -u and -p options;
 * Write username and password in the configuration file, using the _username_ and _password_ directives.
 
- ## Bugs, limitations, wishlist
+## Usage in code
+
+You can include the functionality provided by <strong>mirror.py</strong> into your programs. This can be used, for example,
+to automatically update a program. To do this, you need to include the <strong>mirror.py</strong> module
+and create an instance of the <strong>Mirror</strong> class; set its attributes using its <strong>set</strong> method,
+and finally call its <strong>main</strong> method. See this example:
+
+```
+from mirror import Mirror
+
+def updateMe():
+  m = Mirror()
+  m.set({'url': 'http://myhost.org/repos/myapp/',
+         'username': 'myusername',
+	 'password': 'mypass'})
+  m.main()
+```
+
+The argument to <strong>set</strong> is a dictionary containing any subset of the following keys:
+
+* url (required)
+* filelist
+* username (for Basic authentication)
+* password (for Basic authentication)
+* output (stream for regular output - default is standard output)
+* debug (stream for messages - default is standard error)
+* dry (if True, don't actually download anything
+
+## Bugs, limitations, wishlist
  
  * Python2 only for now.
  * If a download fails, there's basically no way to know why.

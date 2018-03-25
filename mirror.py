@@ -38,6 +38,14 @@ class Mirror():
         self.modified = []
         self.fileames = []
 
+    def set(self, properties):
+        settable = ["url", "filelist", "username", "password", "output", "debug", "dry"]
+        for (key, value) in properties.iteritems():
+            if key in settable:
+                if key == 'url':
+                    key = 'srcpath'
+                setattr(self, key, value)
+        
     def usage(self):
         sys.stdout.write("""mirror.py - simple file mirroring
 
