@@ -33,18 +33,21 @@ class Mirror():
     debug = sys.stderr
     mode = "get"
     dry = False
+    num_updated = 0
+    num_failed = 0
     
     def __init__(self):
         self.modified = []
         self.fileames = []
 
-    def set(self, properties):
-        settable = ["url", "filelist", "username", "password", "output", "debug", "dry"]
-        for (key, value) in properties.iteritems():
-            if key in settable:
-                if key == 'url':
-                    key = 'srcpath'
-                setattr(self, key, value)
+    def set(self, srcpath, properties=None):
+        self.srcpath = srcpath
+        if properties:
+            settable = ["filelist", "username", "password", "output", "debug", "dry"]
+            for (key, value) in properties.iteritems():
+                if key in settable:
+                    setattr(self, key, value)
+            self.maybeDoAuthentication()
         
     def usage(self):
         sys.stdout.write("""mirror.py - simple file mirroring
@@ -225,6 +228,9 @@ Options:
             self.msg("All files up to date.\n")
 
     def updateAll(self):
+        self.num_updated = 0
+        self.num_failed = 0
+        
         if self.created:
             self.msg("Downloading {} new file{}...\n", len(self.created), plural(self.created))
             for cr in self.created:
@@ -233,6 +239,7 @@ Options:
             self.msg("Downloading {} modified file{}...\n", len(self.modified), plural(self.modified))
             for cr in self.modified:
                 self.updateOne("U", cr)
+        self.msg("Terminated - {} file{} updated, {} failed.\n", self.num_updated, self.num_updated, self.num_failed)
 
     def updateOne(self, code, cr):
         path = cr[0]
@@ -244,12 +251,14 @@ Options:
             self.out("???\n")
             return
         if ftype == "D":
-            #try:
-            os.makedirs(path)
-            os.chmod(path, mode)
-            self.out("ok.\n")
-            #except:
-            self.out("failed.\n")
+            try:
+                os.makedirs(path)
+                os.chmod(path, mode)
+                self.out("ok.\n")
+                self.num_updated += 1
+            except:
+                self.out("failed.\n")
+                self.num_failed += 1
         elif ftype == "F":
             try:
                 os.remove(path + ".bak")
@@ -260,18 +269,21 @@ Options:
             if os.path.isfile(path) and os.stat(path).st_size == size:
                 os.chmod(path, mode)
                 self.out("ok.\n")
+                self.num_updated += 1
             else:
                 self.out("failed.\n")
+                self.nun_failed += 1
                 try:
                     os.rename(path + ".bak", path)
                 except:
                     pass
                 
     def main(self):
-        if M.getFilelist():
-            M.findChanged()
-            if M.modified or M.created:
-                M.updateAll()
+        if self.getFilelist():
+            self.findChanged()
+            if self.modified or self.created:
+                self.updateAll()
+        return (self.num_updated, self.num_failed)
                 
 if __name__ == "__main__":
     M = Mirror()

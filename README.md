@@ -123,20 +123,20 @@ to automatically update a program. To do this, you need to include the <strong>m
 and create an instance of the <strong>Mirror</strong> class; set its attributes using its <strong>set</strong> method,
 and finally call its <strong>main</strong> method. See this example:
 
-```
+```python
 from mirror import Mirror
 
 def updateMe():
   m = Mirror()
-  m.set({'url': 'http://myhost.org/repos/myapp/',
-         'username': 'myusername',
+  m.set('http://myhost.org/repos/myapp/',
+        {'username': 'myusername',
 	 'password': 'mypass'})
-  m.main()
+  (updated, failed) = m.main()
+  print "{} updated, {} failed".format(updated, failed)
 ```
 
-The argument to <strong>set</strong> is a dictionary containing any subset of the following keys:
+The first argument to <strong>set</strong> is the URL of the repository; the second argument is an optional dictionary containing any subset of the following keys:
 
-* url (required)
 * filelist
 * username (for Basic authentication)
 * password (for Basic authentication)
